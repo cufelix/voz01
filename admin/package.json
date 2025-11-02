@@ -1,0 +1,42 @@
+{
+  "name": "pripojto-admin",
+  "version": "1.0.0",
+  "description": "Pripoj.to admin panel for trailer rental management",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "14.0.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "firebase-admin": "^11.11.1",
+    "firebase": "^10.6.1",
+    "@hookform/resolvers": "^3.3.2",
+    "react-hook-form": "^7.48.2",
+    "tailwindcss": "^3.3.6",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "recharts": "^2.8.0",
+    "@tanstack/react-table": "^8.10.7",
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
+    "clsx": "^2.0.0",
+    "date-fns": "^2.30.0",
+    "stripe": "^14.9.0",
+    "react-hot-toast": "^2.4.1",
+    "next-auth": "^4.24.5",
+    "lucide-react": "^0.294.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.2",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.39",
+    "@types/react-dom": "^18.2.17",
+    "eslint": "^8.54.0",
+    "eslint-config-next": "14.0.3"
+  }
+}
