@@ -1,0 +1,127 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function canAccessUser(userId) {
+      return isOwner(userId) || isAdmin();
+    }
+
+    function canAccessReservation(reservation) {
+      return isOwner(reservation.data.userId) || isAdmin();
+    }
+
+    function isValidUser(userData) {
+      return userData.keys().hasAll([
+        'uid', 'firstName', 'lastName', 'phone', 'email', 'address',
+        'stripeCustomerId', 'isActive', 'role'
+      ]) &&
+      userData.uid is string &&
+      userData.firstName is string &&
+      userData.lastName is string &&
+      userData.phone is string &&
+      userData.email is string &&
+      userData.address is map &&
+      userData.stripeCustomerId is string &&
+      userData.isActive is bool &&
+      userData.role in ['user', 'admin'];
+    }
+
+    function isValidTrailer(trailerData) {
+      return trailerData.keys().hasAll([
+        'name', 'type', 'manufacturer', 'licensePlate', 'specs',
+        'location', 'pricing', 'lockId', 'status', 'documentsLink'
+      ]) &&
+      trailerData.name is string &&
+      trailerData.type is string &&
+      trailerData.manufacturer is string &&
+      trailerData.licensePlate is string &&
+      trailerData.specs is map &&
+      trailerData.location is map &&
+      trailerData.pricing is map &&
+      trailerData.lockId is string &&
+      trailerData.status in ['available', 'reserved', 'maintenance'] &&
+      trailerData.documentsLink is string;
+    }
+
+    function isValidReservation(reservationData) {
+      return reservationData.keys().hasAll([
+        'userId', 'trailerId', 'status', 'startDate', 'endDate',
+        'totalPrice', 'pinCode', 'pinExpiry', 'stripePaymentIntentId'
+      ]) &&
+      reservationData.userId is string &&
+      reservationData.trailerId is string &&
+      reservationData.status in ['pending_payment', 'confirmed', 'active', 'completed', 'cancelled'] &&
+      reservationData.startDate is timestamp &&
+      reservationData.endDate is timestamp &&
+      reservationData.totalPrice is int &&
+      reservationData.pinCode is string &&
+      reservationData.pinExpiry is timestamp &&
+      reservationData.stripePaymentIntentId is string;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if canAccessUser(userId);
+      allow create: if isAuthenticated() &&
+                       isOwner(userId) &&
+                       isValidUser(resource.data);
+      allow update: if canAccessUser(userId) &&
+                       isValidUser(resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Trailers collection
+    match /trailers/{trailerId} {
+      allow read: if true; // Public read access for available trailers
+      allow create: if isAdmin() && isValidTrailer(resource.data);
+      allow update: if isAdmin() && isValidTrailer(resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Reservations collection
+    match /reservations/{reservationId} {
+      allow read: if canAccessReservation(resource);
+      allow create: if isAuthenticated() &&
+                       isOwner(resource.data.userId) &&
+                       isValidReservation(resource.data);
+      allow update: if canAccessReservation(resource) &&
+                       isValidReservation(resource.data);
+      allow delete: if isAdmin();
+    }
+
+    // Pins collection (for smart lock management)
+    match /pins/{pinId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Locks collection
+    match /locks/{lockId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Deny all other reads and writes
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
