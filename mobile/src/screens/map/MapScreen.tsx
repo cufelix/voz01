@@ -7,6 +7,7 @@ import {
   PermissionsAndroid,
   Platform,
   ActivityIndicator,
+  Text,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import MapView, { Marker, Region, PROVIDER_GOOGLE } from 'react-native-maps';
